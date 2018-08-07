@@ -1,0 +1,22 @@
+GIT
+  remote: https://github.com/bo-oz/vimeo_me2.git
+  revision: 6d09c58acf06c7a333178a51142cb42114b59c4e
+  specs:
+    vimeo_me2 (1.2.0)
+      httparty (~> 0.14.0)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    httparty (0.14.0)
+      multi_xml (>= 0.5.2)
+    multi_xml (0.6.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  vimeo_me2!
+
+BUNDLED WITH
+   1.16.1
