@@ -34,6 +34,15 @@ csv_counter = 0
 csv_headers = %w(
   uri
   name
+  description
+  link
+  duration
+  created_time
+  release_time
+  view_privacy
+  tags
+  play_stats
+  status
 )
 
 puts "Writing CSV at #{csv_file_path}…"
@@ -53,9 +62,21 @@ CSV.open(csv_file_path, 'wb') do |csv|
       v = OpenStruct.new(video_data)
       row = [
         v.uri,
-        v.name
+        v.name,
+        v.description || '', # allowed to be nil
+        v.link,
+        v.duration,
+        v.created_time,
+        v.release_time,
+        v.privacy['view'],
+        v.tags.map { |t| t['name'] }.join(','),
+        v.stats['plays'],
+        v.status
       ]
+
+      raise "CSV row has non-string values" unless row.all? { |v| v.is_a?(String) || v.is_a?(Numeric) }
       raise "CSV row columns don't match headers" if row.length != csv_headers.length
+
       csv << row
       csv_counter += 1
       puts %{Processed "#{v.name}"}
