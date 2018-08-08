@@ -3,27 +3,30 @@ require 'bundler/setup'
 require 'optparse'
 require 'vimeo_me2'
 
-VimeoAccountInfo = Struct.new(:auth_token, :username)
+VimeoAccountInfo = Struct.new(:auth_token, :username, :limit)
 account_info = VimeoAccountInfo.new
 
 OptionParser.new do |opts|
-  opts.on('-a', '--auth-token', 'Vimeo account auth token') do |auth_token|
+  opts.on('-a', '--auth-token TOKEN', String, 'Vimeo account auth token') do |auth_token|
     account_info.auth_token = auth_token
   end
-  opts.on('-u', '--username', 'Vimeo account username') do |username|
+  opts.on('-u', '--username NAME', String, 'Vimeo account username') do |username|
     account_info.username = username
   end
-end
+  opts.on('-l', '--limit COUNT', OptionParser::DecimalInteger, 'Fetch count limit (for testing)') do |limit|
+    account_info.limit = limit
+  end
+end.parse!
 
-account_info.auth_token ||= File.read('.auth_token').chomp
-account_info.username   ||= File.read('.vimeo_username').chomp
+account_info.auth_token ||= File.exist?('.auth_token') && File.read('.auth_token').chomp
 
 vimeo = VimeoMe2::VimeoObject.new(account_info.auth_token)
 vimeo_user = VimeoMe2::User.new(account_info.auth_token, account_info.username)
 user = OpenStruct.new(vimeo_user.user)
+video_count = user.metadata['connections']['videos']['total']
 
 puts %{Starting export for "#{user.name}" (#{account_info.username})}
-puts %{Exporting metadata for #{user.metadata['connections']['videos']['total']} videos}
+puts %{Exporting metadata for #{video_count} videos #{"(limiting to #{account_info.limit})" if account_info.limit}}
 
 output_directory_name = 'output'
 Dir.mkdir(output_directory_name) unless File.exists?(output_directory_name)
@@ -79,12 +82,12 @@ CSV.open(csv_file_path, 'wb') do |csv|
 
       csv << row
       csv_counter += 1
-      puts %{Processed "#{v.name}"}
+      puts %{Processed #{csv_counter.to_s.rjust(video_count.digits.count, '0')}/#{video_count} (#{(csv_counter/video_count.to_f * 100).to_i}%) "#{v.name}"}
     end
 
     next_page = vidoes_page['paging']['next']
 
-    break if csv_counter >= 50
+    break if account_info.limit && csv_counter >= account_info.limit
   end
 end
 

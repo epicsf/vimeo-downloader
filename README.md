@@ -22,5 +22,6 @@ username you'd like to download:
 
    ruby vimeo-downloader.rb --auth-token abc123 --username epicsf
 
-You can optionally supply these values in files named `.auth_token` and
-`.vimeo_username` in the same directory as the script.
+You can optionally supply the auth token value in a file named `.auth_token`.
+You can also limit the number of videos it downloads by setting a `--limit NUM`
+flag, e.g. for testing on a smaller number of videos.
