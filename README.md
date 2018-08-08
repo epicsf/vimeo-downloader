@@ -1,8 +1,10 @@
-# [vimeo-downloader](https://github.com/epicsf/vimeo-downloader)
+[vimeo-downloader](https://github.com/epicsf/vimeo-downloader)
 ================================================================================
 
 A Ruby script for downloading an archive of published Vimeo videos, suitable
 for re-uploading to another video service provider.
+
+In its current iteration, it simply outputs a CSV of video metadata and actually downloading video files is left as an exercise for the reader…
 
 Setup
 -----
@@ -25,3 +27,8 @@ username you'd like to download:
 You can optionally supply the auth token value in a file named `.auth_token`.
 You can also limit the number of videos it downloads by setting a `--limit NUM`
 flag, e.g. for testing on a smaller number of videos.
+
+To-Do
+-----
+
+Actually download video files.
