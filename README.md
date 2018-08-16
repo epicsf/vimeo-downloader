@@ -18,13 +18,13 @@ Setup
    store this in an `.auth_token` file in the project directory or supply it as
    a command line argument to the script (see below).
 
-3. If you want the downloader to be able to download private videos or the
-   original video files from Vimeo (best quality), provide your Vimeo account
-   credentials in `~/.netrc` according to the
+3. Set up Vimeo account credentials for youtube-dl. In order to download
+   private videos or the original video files from Vimeo (best quality),
+   provide your Vimeo account credentials in `~/.netrc` according to the
    [instructions for youtube-dl](https://github.com/rg3/youtube-dl/#authentication-with-netrc-file
    ).
-   Without this, it will attempt to download the best quality available and
-   skip private videos.
+   Without this, it will error on private or unlisted videos (either because of
+   no access or no access to the original file).
 
 
 Usage

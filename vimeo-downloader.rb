@@ -125,7 +125,7 @@ youtube-dl \\
   --no-overwrites \\
   --ignore-config \\
   --netrc \\
-  --format Original/best \\
+  --format Original \\
   --output '#{output_directory_name}/videos/%(upload_date)s-%(id)s/%(id)s.%(ext)s' \\
   --batch-file #{video_urls_file.path}
 SH
