@@ -9,12 +9,23 @@ In its current iteration, it simply outputs a CSV of video metadata and actually
 Setup
 -----
 
-1. Install dependencies (`bundle install`)
+1. Install dependencies (`bundle install`). The script uses
+   [youtube-dl](https://github.com/rg3/youtube-dl) to do the heavy lifting,
+   so you'll also need that (`brew install youtube-dl`).
 
 2. Generate an access token for your Vimeo account
    ([https://developer.vimeo.com](https://developer.vimeo.com)). You can either
    store this in an `.auth_token` file in the project directory or supply it as
    a command line argument to the script (see below).
+
+3. If you want the downloader to be able to download private videos or the
+   original video files from Vimeo (best quality), provide your Vimeo account
+   credentials in `~/.netrc` according to the
+   [instructions for youtube-dl](https://github.com/rg3/youtube-dl/#authentication-with-netrc-file
+   ).
+   Without this, it will attempt to download the best quality available and
+   skip private videos.
+
 
 Usage
 -----
