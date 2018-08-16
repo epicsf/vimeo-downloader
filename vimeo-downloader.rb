@@ -18,7 +18,7 @@ end
 
 videos = []
 
-Options = Struct.new(:auth_token, :username, :limit, :download)
+Options = Struct.new(:auth_token, :username, :limit, :download, :output_path)
 options = Options.new
 
 OptionParser.new do |opts|
@@ -34,9 +34,13 @@ OptionParser.new do |opts|
   opts.on('-d', '--download', 'Download video files') do |download|
     options.download = download
   end
+  opts.on('-o', '--output PATH', String, 'Path for output files') do |path|
+    options.output_path = path
+  end
 end.parse!
 
 options.auth_token ||= File.exist?('.auth_token') && File.read('.auth_token').chomp
+options.output_path ||= 'output'
 
 vimeo = VimeoMe2::VimeoObject.new(options.auth_token)
 vimeo_user = VimeoMe2::User.new(options.auth_token, options.username)
@@ -46,7 +50,7 @@ vimeo_video_count = user.metadata['connections']['videos']['total']
 puts %{Starting export for "#{user.name}" (#{options.username})}
 puts %{Exporting metadata for #{vimeo_video_count} videos #{"(limiting to #{options.limit})" if options.limit}}
 
-output_directory_name = File.join('output', options.username)
+output_directory_name = File.expand_path(options.output_path, options.username)
 FileUtils.mkpath(output_directory_name) unless File.exists?(output_directory_name)
 
 base_filename = "vimeo_export_#{options.username}_#{Time.now.iso8601.gsub(':', '')}"
