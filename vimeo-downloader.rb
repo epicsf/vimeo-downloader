@@ -50,7 +50,7 @@ vimeo_video_count = user.metadata['connections']['videos']['total']
 puts %{Starting export for "#{user.name}" (#{options.username})}
 puts %{Exporting metadata for #{vimeo_video_count} videos #{"(limiting to #{options.limit})" if options.limit}}
 
-output_directory_name = File.expand_path(options.output_path, options.username)
+output_directory_name = File.expand_path(options.username, options.output_path)
 FileUtils.mkpath(output_directory_name) unless File.exists?(output_directory_name)
 
 base_filename = "vimeo_export_#{options.username}_#{Time.now.iso8601.gsub(':', '')}"
