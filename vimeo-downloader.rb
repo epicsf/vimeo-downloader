@@ -18,7 +18,7 @@ end
 
 videos = []
 
-Options = Struct.new(:auth_token, :username, :limit, :download, :output_path)
+Options = Struct.new(:auth_token, :username, :email, :password, :limit, :download, :output_path)
 options = Options.new
 
 OptionParser.new do |opts|
@@ -27,6 +27,12 @@ OptionParser.new do |opts|
   end
   opts.on('-u', '--username NAME', String, 'Vimeo account username') do |username|
     options.username = username
+  end
+  opts.on('-e', '--email EMAIL', String, 'Vimeo account email (or supply in .netrc)') do |email|
+    options.email = email
+  end
+  opts.on('-p', '--password PASSWORD', String, 'Vimeo account password (or supply in .netrc)') do |password|
+    options.password = password
   end
   opts.on('-l', '--limit COUNT', OptionParser::DecimalInteger, 'Fetch count limit (for testing)') do |limit|
     options.limit = limit
@@ -115,20 +121,32 @@ puts "Starting video file downloads…"
 has_downloader = !`which youtube-dl`.empty?
 abort("\nCouldn't find downloader. Please install youtube-dl first (brew install youtube-dl).") unless has_downloader
 
-download_command = <<-SH
-youtube-dl \\
-  --abort-on-error \\
-  --write-description \\
-  --write-info-json \\
-  --write-thumbnail \\
-  --restrict-filenames \\
-  --no-overwrites \\
-  --ignore-config \\
-  --netrc \\
-  --format Original \\
-  --output '#{output_directory_name}/videos/%(upload_date)s-%(id)s/%(id)s.%(ext)s' \\
-  --batch-file #{video_urls_file.path}
-SH
+# Build youtube-dl command
+download_command = 'youtube-dl'
+download_args = Array.new.tap do |a|
+  a << 'abort-on-error'
+  a << 'write-description'
+  a << 'write-info-json'
+  a << 'write-thumbnail'
+  a << 'restrict-filenames'
+  a << 'no-overwrites'
+  a << 'ignore-config'
+  a << 'format Original'
+
+  if options.username && options.password
+    a << "username #{options.email}"
+    a << "password #{options.password}"
+  else
+    a << 'netrc'
+  end
+
+  a << "output '#{output_directory_name}/videos/%(upload_date)s-%(id)s/%(id)s.%(ext)s'"
+  a << "batch-file #{video_urls_file.path}"
+end
+
+download_args.each do |arg|
+  download_command << " \\\n  --#{arg}"
+end
 
 puts "Executing:\n#{download_command.strip}"
 exec download_command
