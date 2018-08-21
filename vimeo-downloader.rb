@@ -127,15 +127,14 @@ catch :sigint do
     # Build youtube-dl command
     download_command = 'youtube-dl'
     download_args = Array.new.tap do |a|
-      a << 'abort-on-error'
-      a << 'write-description'
-      a << 'write-info-json'
-      a << 'write-thumbnail'
-      a << 'restrict-filenames'
-      a << 'no-overwrites'
-      a << 'ignore-config'
-      a << 'format Original'
+      a << 'ignore-config'         # ignore any local config and use only this one
+      a << 'no-overwrites'         # don't overwrite already-downloaded files
+      a << 'write-description'     # output a text file with video description
+      a << 'write-info-json'       # output a JSON file with video metadata (redundant with CSV data but why not)
+      a << 'write-thumbnail'       # output a thumbnail image file
+      a << 'format Original'       # only download original source file
 
+      # auth from passed username/password or ~/.netrc file
       if options.username && options.password
         a << "username #{options.email}"
         a << "password #{options.password}"
