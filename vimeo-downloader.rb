@@ -60,7 +60,6 @@ output_directory_name = File.expand_path(options.username, options.output_path)
 FileUtils.mkpath(output_directory_name) unless File.exists?(output_directory_name)
 
 base_filename = "vimeo_export_#{options.username}_#{Time.now.iso8601.gsub(':', '')}"
-video_urls_file = Tempfile.new(base_filename)
 csv_file_path = File.join(output_directory_name, "#{base_filename}.csv")
 
 puts "Writing CSV at #{csv_file_path}…"
@@ -97,8 +96,6 @@ CSV.open(csv_file_path, 'wb') do |csv|
         video.validate!
         videos << video
         csv << video.to_a
-        video_urls_file << video.link + "\n"
-        video_urls_file.flush
 
         progress_string = "#{videos.count.to_s.rjust(vimeo_video_count.digits.count, '0')}/#{vimeo_video_count} (#{(videos.count/vimeo_video_count.to_f * 100).to_i}%) "
         puts %{Processed #{progress_string}"#{video.name}"}
@@ -121,32 +118,56 @@ puts "Starting video file downloads…"
 has_downloader = !`which youtube-dl`.empty?
 abort("\nCouldn't find downloader. Please install youtube-dl first (brew install youtube-dl).") unless has_downloader
 
-# Build youtube-dl command
-download_command = 'youtube-dl'
-download_args = Array.new.tap do |a|
-  a << 'abort-on-error'
-  a << 'write-description'
-  a << 'write-info-json'
-  a << 'write-thumbnail'
-  a << 'restrict-filenames'
-  a << 'no-overwrites'
-  a << 'ignore-config'
-  a << 'format Original'
+DownloadResult = Struct.new(:url, :status)
+download_results = []
 
-  if options.username && options.password
-    a << "username #{options.email}"
-    a << "password #{options.password}"
-  else
-    a << 'netrc'
+Signal.trap('INT') { throw :sigint }
+catch :sigint do
+  videos.each do |video|
+    # Build youtube-dl command
+    download_command = 'youtube-dl'
+    download_args = Array.new.tap do |a|
+      a << 'abort-on-error'
+      a << 'write-description'
+      a << 'write-info-json'
+      a << 'write-thumbnail'
+      a << 'restrict-filenames'
+      a << 'no-overwrites'
+      a << 'ignore-config'
+      a << 'format Original'
+
+      if options.username && options.password
+        a << "username #{options.email}"
+        a << "password #{options.password}"
+      else
+        a << 'netrc'
+      end
+
+      a << "output '#{output_directory_name}/videos/%(upload_date)s-%(id)s/%(id)s.%(ext)s'"
+    end
+
+    download_args.each do |arg|
+      download_command << " \\\n  --#{arg}"
+    end
+
+    download_command << " \\\n  #{video.link}"
+
+    # Download and collect result
+    puts "Executing:\n#{download_command.strip}"
+    result = system(download_command)
+
+    download_results << DownloadResult.new(video.link, result)
   end
-
-  a << "output '#{output_directory_name}/videos/%(upload_date)s-%(id)s/%(id)s.%(ext)s'"
-  a << "batch-file #{video_urls_file.path}"
 end
 
-download_args.each do |arg|
-  download_command << " \\\n  --#{arg}"
-end
+successes, failures = download_results.partition { |r| r.status }
 
-puts "Executing:\n#{download_command.strip}"
-exec download_command
+puts "\n\n"
+puts "Download results:"
+puts "Unfinished: #{videos.count - download_results.count}"
+puts "Success:    #{successes.count}"
+puts "Failures:   #{failures.count}"
+
+failures.each do |result|
+  puts "  #{result.url}"
+end
