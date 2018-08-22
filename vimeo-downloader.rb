@@ -1,6 +1,8 @@
 require 'rubygems'
 require 'bundler/setup'
 require 'optparse'
+require 'fileutils'
+require 'active_support/time'
 require 'vimeo_me2'
 
 Video = Struct.new(:uri, :name, :description, :link, :duration, :created_time, :release_time, :view_privacy, :download_privacy, :tags, :play_stats, :status, keyword_init: true) do
@@ -13,6 +15,17 @@ Video = Struct.new(:uri, :name, :description, :link, :duration, :created_time, :
       end
     end
     true
+  end
+
+  def upload_date
+    # Need to convert time zones because created_time is in UTC, but youtube-dl
+    # upload_date seems to be in Vimeo-local time which is NYC.
+    tz = ActiveSupport::TimeZone['US/Eastern']
+    Time.parse(created_time).in_time_zone(tz).strftime('%Y%m%d')
+  end
+
+  def id
+    uri.split('/').last
   end
 end
 
@@ -124,6 +137,16 @@ download_results = []
 Signal.trap('INT') { throw :sigint }
 catch :sigint do
   videos.each do |video|
+
+    completion_flag_path = "#{output_directory_name}/videos/#{video.upload_date}-#{video.id}/.complete"
+
+    # Skip already downloaded
+    if File.exist? completion_flag_path
+      download_results << DownloadResult.new(video.link, :skipped)
+      puts "Already downloaded, skipping: #{video.link}"
+      next
+    end
+
     # Build youtube-dl command
     download_command = 'youtube-dl'
     download_args = Array.new.tap do |a|
@@ -145,26 +168,31 @@ catch :sigint do
       a << "output '#{output_directory_name}/videos/%(upload_date)s-%(id)s/%(id)s.%(ext)s'"
     end
 
+    # Append all the above arguments/flags
     download_args.each do |arg|
       download_command << " \\\n  --#{arg}"
     end
 
+    # Append video URL
     download_command << " \\\n  #{video.link}"
 
     # Download and collect result
     puts "Executing:\n#{download_command.strip}"
-    result = system(download_command)
+    success = system(download_command)
 
-    download_results << DownloadResult.new(video.link, result)
+    FileUtils.touch(completion_flag_path) if success
+
+    download_results << DownloadResult.new(video.link, success)
   end
 end
 
-successes, failures = download_results.partition { |r| r.status }
+successes, failures = download_results.partition { |r| !!r.status }
 
 puts "\n\n"
 puts "Download results:"
 puts "Unfinished: #{videos.count - download_results.count}"
 puts "Success:    #{successes.count}"
+puts "Skipped:    #{successes.select { |r| r.status == :skipped }.count}"
 puts "Failures:   #{failures.count}"
 
 failures.each do |result|
