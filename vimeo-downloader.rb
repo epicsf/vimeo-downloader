@@ -155,7 +155,7 @@ catch :sigint do
       a << 'write-description'     # output a text file with video description
       a << 'write-info-json'       # output a JSON file with video metadata (redundant with CSV data but why not)
       a << 'write-thumbnail'       # output a thumbnail image file
-      a << 'format Original'       # only download original source file
+      a << 'format Original/best'  # try to download originals first, fall back to "best"
 
       # auth from passed username/password or ~/.netrc file
       if options.username && options.password
