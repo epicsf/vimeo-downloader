@@ -1,10 +1,12 @@
 [vimeo-downloader](https://github.com/epicsf/vimeo-downloader)
 ================================================================================
 
-A Ruby script for downloading an archive of published Vimeo videos, suitable
+A Ruby script for downloading a backup of your published Vimeo videos, suitable
 for re-uploading to another video service provider.
 
-In its current iteration, it simply outputs a CSV of video metadata and actually downloading video files is left as an exercise for the reader…
+The first time you run it, it will download all your video metadata and output
+to a CSV file. If that looks good, run the script again passing the
+`--download` flag to actually start downloading.
 
 Setup
 -----
@@ -18,28 +20,30 @@ Setup
    store this in an `.auth_token` file in the project directory or supply it as
    a command line argument to the script (see below).
 
-3. Set up Vimeo account credentials for youtube-dl. In order to download
-   private videos or the original video files from Vimeo (best quality),
-   provide your Vimeo account credentials in `~/.netrc` according to the
-   [instructions for youtube-dl](https://github.com/rg3/youtube-dl/#authentication-with-netrc-file
-   ).
-   Without this, it will error on private or unlisted videos (either because of
-   no access or no access to the original file).
-
-
 Usage
 -----
 
-Run `vimeo-downloader.rb`, supplying your auth token and the vimeo account
-username you'd like to download:
+Run `vimeo-downloader.rb`, supplying your all the required credentials: the
+auth token for your vimeo account, vimeo account username, email, and password
+(required for logging in to download original video files):
 
-   ruby vimeo-downloader.rb --auth-token abc123 --username epicsf
+    ruby vimeo-downloader.rb \
+      --auth-token abc123 \
+      --username epicsf \
+      --email epicsf@example.com \
+      --password yoursecretpassword
 
-You can optionally supply the auth token value in a file named `.auth_token`.
-You can also limit the number of videos it downloads by setting a `--limit NUM`
-flag, e.g. for testing on a smaller number of videos.
+You can optionally supply the auth token value in a file named `.auth_token`
+and the Vimeo account username/password in a `.netrc` file (see
+[instructions for youtube-dl](https://github.com/rg3/youtube-dl/#authentication-with-netrc-file).)
 
-To-Do
------
+Here are all the available options or flags you can set:
 
-Actually download video files.
+    Usage: vimeo-downloader [options]
+        -a, --auth-token TOKEN           Vimeo account auth token
+        -u, --username NAME              Vimeo account username
+        -e, --email EMAIL                Vimeo account email (or supply in .netrc)
+        -p, --password PASSWORD          Vimeo account password (or supply in .netrc)
+        -l, --limit COUNT                Fetch count limit (for testing)
+        -d, --download                   Download video files
+        -o, --output PATH                Path for output files
